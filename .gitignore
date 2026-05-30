@@ -1,0 +1,19 @@
+# Secrets & data — never publish
+.env
+*.db
+kommentarvakt.db
+
+# Python
+__pycache__/
+*.pyc
+
+# Build artifacts
+*.zip
+store_assets/*.zip
+
+# Internal / not for the public repo
+launch_posts.md
+
+# internal store-submission docs
+store_assets/STORE_LISTING.md
+store_assets/SUBMISSION_GUIDE.md

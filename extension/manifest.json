@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Lovefilter — stop hate, keep free speech",
+  "version": "0.1.0",
+  "description": "Hides hate & harassment in your X feed, keeps honest disagreement. We love free speech — just not hate. One click, instant.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://vakt.aeris.no/*"],
+  "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Lovefilter",
+    "default_icon": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<style>
+  body{font-family:system-ui,sans-serif;width:280px;margin:0;color:#1e293b}
+  .bar{height:5px;background:linear-gradient(90deg,#e40303,#ff8c00,#ffed00,#008026,#004dff,#750787)}
+  .p{padding:16px}
+  h1{font-size:1rem;margin:0 0 2px}.sub{font-size:.78rem;color:#64748b;margin:0 0 14px}
+  .row{display:flex;align-items:center;justify-content:space-between;margin:12px 0}
+  label{font-size:.9rem;font-weight:600}
+  select{padding:6px 8px;border:1px solid #e5e7eb;border-radius:7px;font:inherit}
+  .switch{position:relative;width:46px;height:26px}
+  .switch input{display:none}
+  .sl{position:absolute;inset:0;background:#cbd5e1;border-radius:99px;transition:.2s;cursor:pointer}
+  .sl:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+  input:checked+.sl{background:#22c55e}
+  input:checked+.sl:before{transform:translateX(20px)}
+  .count{background:#f1f5f9;border-radius:8px;padding:8px 12px;font-size:.82rem;color:#475569;margin-top:6px}
+  .count b{color:#1e293b}
+  .foot{font-size:.72rem;color:#94a3b8;margin-top:12px;line-height:1.4}
+</style></head>
+<body>
+<div class="bar"></div>
+<div class="p">
+  <h1>🏳️‍🌈 Lovefilter</h1>
+  <p class="sub">We love free speech — we just don't want hate.</p>
+  <div class="row">
+    <label for="enabled">On</label>
+    <span class="switch"><input type="checkbox" id="enabled"><span class="sl"></span></span>
+  </div>
+  <div class="row">
+    <label for="streng">Strictness</label>
+    <select id="streng">
+      <option value="mild">Mild — overt hate only</option>
+      <option value="medium">Medium — hate + dehumanization</option>
+      <option value="streng">Strict — also derogatory generalizations</option>
+    </select>
+  </div>
+  <div class="count">Hidden this session: <b id="count">0</b> comments</div>
+  <p class="foot">Honest disagreement and criticism always stay. Everything is reversible — "Show anyway" on every hidden post.</p>
+</div>
+<script src="popup.js"></script>
+</body></html>
