@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Lovefilter — hide hate, keep the debate",
   "version": "0.2.0",
-  "description": "Uses AI to hide hate & harassment in your feed, keeps honest disagreement, and gently lifts the kind replies. Reversible, no tracking.",
+  "description": "Uses AI to hide hate & harassment in your feed, keeps honest disagreement, and lifts the kind replies. Reversible, no tracking.",
   "permissions": ["storage"],
   "host_permissions": ["https://vakt.aeris.no/*"],
   "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" },
