@@ -9,7 +9,8 @@ ser kva som blei skjult og kvifor — ingen stille sensur.
 Demo: lim inn kommentarar (ein per linje) → sjå kva vakta ville gjort.
 Neste steg: kople til Facebook/Instagram-side via Graph API og auto-skjule.
 """
-import os, json, ssl, sqlite3, urllib.request
+import os, json, ssl, sqlite3, urllib.request, time, threading
+from collections import defaultdict, deque
 from flask import Flask, request, render_template_string, redirect
 
 # ── Moderering-modell: Gemini Flash (rask ~0.9s, god norsk, gratis-tier) ──────
@@ -27,6 +28,49 @@ def _load_key():
 
 GEMINI_KEY = _load_key()
 GEMINI_MODEL = "gemini-2.5-flash-lite"
+
+# ── Abuse-/kostnadsvakt (alt fail-open: blokkerer aldri feeden, vernar berre rekninga) ──
+_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kommentarvakt.db")
+MAX_TEXT_LEN = int(os.environ.get("LF_MAX_TEXT_LEN", "600"))      # kapp per kommentar (token-blow-up-vern)
+DAILY_GEMINI_CAP = int(os.environ.get("LF_DAILY_CAP", "500000"))  # maks ekte Gemini-kall/dag (~$15 worst case); over → fail-open
+RATE_PER_MIN = int(os.environ.get("LF_RATE_PER_MIN", "600"))      # maks tekstar/min per klient-IP
+
+_RL = defaultdict(deque)            # ip -> tidsstempel (per-worker glidande vindu)
+_RL_LOCK = threading.Lock()
+
+def _client_ip():
+    return (request.headers.get("CF-Connecting-IP")
+            or request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+            or request.remote_addr or "?")
+
+def _rate_ok(ip, cost=1):
+    now = time.time()
+    with _RL_LOCK:
+        dq = _RL[ip]
+        while dq and dq[0] < now - 60:
+            dq.popleft()
+        if len(dq) + cost > RATE_PER_MIN:
+            return False
+        dq.extend([now] * cost)
+        return True
+
+def _spend_ok_and_count():
+    """True om vi er under dagleg Gemini-tak; tel opp eitt kall (delt på tvers av workers via SQLite).
+    Feilar teljaren → tillat (fail-open: vern aldri rekninga på kostnad av at produktet sluttar å virke)."""
+    try:
+        db = sqlite3.connect(_DB_PATH, timeout=5)
+        db.execute("CREATE TABLE IF NOT EXISTS daily_calls(day TEXT PRIMARY KEY, n INTEGER)")
+        day = time.strftime("%Y-%m-%d", time.gmtime())
+        row = db.execute("SELECT n FROM daily_calls WHERE day=?", (day,)).fetchone()
+        if row and row[0] >= DAILY_GEMINI_CAP:
+            db.close()
+            return False
+        db.execute("INSERT INTO daily_calls(day,n) VALUES(?,1) "
+                   "ON CONFLICT(day) DO UPDATE SET n=n+1", (day,))
+        db.commit(); db.close()
+        return True
+    except Exception:
+        return True
 
 # English UI/output (global product). The model still reads ALL languages
 # (Norwegian, etc.) — only the instruction + returned reason are English.
@@ -65,6 +109,8 @@ def klassifiser(tekst, streng):
     return v
 
 def _klassifiser_raw(tekst, streng):
+    if not _spend_ok_and_count():
+        return {"action": "keep", "category": "feil", "reason": "dagleg tak nadd", "confidence": 0.0}
     try:
         url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
                f"{GEMINI_MODEL}:generateContent?key={GEMINI_KEY}")
@@ -186,7 +232,7 @@ def index():
     if raw:
         if streng not in STRENGHET:
             streng = "medium"
-        linjer = [l.strip() for l in raw.splitlines() if l.strip()][:40]
+        linjer = [l.strip()[:MAX_TEXT_LEN] for l in raw.splitlines() if l.strip()][:40]
         from concurrent.futures import ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=6) as pool:
             verdikt = list(pool.map(lambda l: klassifiser(l, streng), linjer))
@@ -231,7 +277,10 @@ def api_klassifiser():
     if request.method == "OPTIONS":
         return ("", 204)
     data = request.get_json(force=True, silent=True) or {}
-    texts = [t for t in data.get("texts", []) if isinstance(t, str) and t.strip()][:30]
+    texts = [t.strip()[:MAX_TEXT_LEN] for t in data.get("texts", []) if isinstance(t, str) and t.strip()][:30]
+    if texts and not _rate_ok(_client_ip(), cost=len(texts)):
+        out = [{"action": "keep", "category": "rate", "reason": "rate limit"} for _ in texts]
+        return app.response_class(json.dumps({"results": out}), mimetype="application/json", status=429)
     streng = data.get("streng", "medium")
     if streng not in STRENGHET:
         streng = "medium"
