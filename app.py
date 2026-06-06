@@ -17,13 +17,23 @@ from flask import Flask, request, render_template_string, redirect
 # Vald etter benchmark mot Kimi (8s/kall): Gemini er ~9× raskare og meir presis
 # på hat-vs-kritikk-grensa. REST-kall → ingen ekstra pakke-avhengigheit.
 def _load_key():
-    for path in (os.path.expanduser("~/REDACTED/aeris-gateway/.env"),):
-        try:
-            for line in open(path):
-                if line.startswith("GEMINI_API_KEY="):
-                    return line.strip().split("=", 1)[1]
-        except FileNotFoundError:
-            pass
+    # 1) Lovefilter sin EIGEN produkt-nøkkel (åtskilt frå AI-familiens gateway).
+    k = os.environ.get("LF_GEMINI_KEY", "").strip()
+    if k:
+        return k
+    try:
+        k = open(os.path.expanduser("~/.config/REDACTED-SECRETS/lovefilter-gemini-key")).read().strip()
+        if k:
+            return k
+    except FileNotFoundError:
+        pass
+    # 2) Fallback: familie-gatewayen sin nøkkel (berre til eigen nøkkel er på plass).
+    try:
+        for line in open(os.path.expanduser("~/REDACTED/aeris-gateway/.env")):
+            if line.startswith("GEMINI_API_KEY="):
+                return line.strip().split("=", 1)[1]
+    except FileNotFoundError:
+        pass
     return os.environ.get("GEMINI_API_KEY", "")
 
 GEMINI_KEY = _load_key()
