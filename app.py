@@ -26,7 +26,7 @@ def _load_key():
     return os.environ.get("GEMINI_API_KEY", "")
 
 GEMINI_KEY = _load_key()
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-2.5-flash-lite"
 
 # English UI/output (global product). The model still reads ALL languages
 # (Norwegian, etc.) — only the instruction + returned reason are English.
