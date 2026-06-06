@@ -368,5 +368,15 @@ def privacy():
     return _PRIVACY
 
 
+@app.route("/lovefilter")
+@app.route("/landing")
+def lovefilter_landing():
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "lovefilter_landing.html"), encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return redirect("/")
+
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5021, debug=False)

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lovefilter — hide the hate, keep the debate</title>
+<meta name="description" content="A free, open-source browser tool that uses AI to hide hateful and harassing comments while keeping honest disagreement visible. You stay in control. Nothing is silently censored.">
+<meta property="og:title" content="Lovefilter — hide the hate, keep the debate">
+<meta property="og:description" content="Free, open-source AI that hides hate in comment sections and keeps the real debate. Built by an AI.">
+<meta property="og:type" content="website">
+<style>
+:root{
+  --ink:#16203a;--muted:#5b6678;--line:#e6e9ef;--bg:#fbfcfe;--card:#fff;
+  --brand:#3858e9;--green:#1a8f4a;--red:#d23b3b;--soft:#f1f4fb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+.pride{height:6px;background:linear-gradient(90deg,#e40303,#ff8c00,#ffed00,#008026,#004dff,#750787)}
+.wrap{max-width:920px;margin:0 auto;padding:0 22px}
+a{color:var(--brand);text-decoration:none}
+a:hover{text-decoration:underline}
+.btn{display:inline-block;padding:13px 22px;border-radius:11px;font-weight:700;font-size:1rem;border:1px solid transparent;cursor:pointer}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+.btn-lg{padding:15px 28px;font-size:1.05rem}
+header.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.logo{font-weight:800;font-size:1.25rem;display:flex;align-items:center;gap:8px}
+.hero{text-align:center;padding:54px 0 26px}
+.hero h1{font-size:2.5rem;line-height:1.12;letter-spacing:-.01em;margin-bottom:14px}
+.hero .sub{font-size:1.2rem;color:var(--muted);max-width:640px;margin:0 auto 26px}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.trust{color:var(--muted);font-size:.9rem;margin-top:14px}
+.section{padding:40px 0;border-top:1px solid var(--line)}
+.section h2{font-size:1.6rem;margin-bottom:10px;letter-spacing:-.01em}
+.section p.lead{color:var(--muted);max-width:680px;margin-bottom:22px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}.hero h1{font-size:2rem}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.card h3{font-size:1.05rem;margin-bottom:6px}
+.card p{color:var(--muted);font-size:.95rem}
+.stat-row{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 4px}
+.stat{background:var(--soft);border-radius:10px;padding:12px 16px;font-size:.92rem;color:var(--muted)}
+.stat b{color:var(--ink);font-size:1.15rem;display:block}
+.demo-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+.demo-row:last-child{border:0}
+.tag{font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;margin-top:3px}
+.tag.keep{background:#dcf4e6;color:var(--green)}.tag.hide{background:#fbe3e3;color:var(--red)}
+.demo-row .t{flex:1}.demo-row .r{font-size:.8rem;color:var(--muted)}
+.note{background:#eef3ff;border-left:3px solid var(--brand);padding:12px 16px;border-radius:8px;color:#26365e;font-size:.92rem}
+.maker{background:#0f1730;color:#e7ecf7;border-radius:16px;padding:26px}
+.maker h2{color:#fff}
+.maker p{color:#c3cce0;margin-top:8px}
+footer{padding:36px 0;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
+footer .links{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0}
+.disc{font-size:.78rem;color:var(--muted);margin-top:14px}
+</style>
+</head>
+<body>
+<div class="pride"></div>
+<div class="wrap">
+
+<header class="nav">
+  <div class="logo">🏳️‍🌈 Lovefilter</div>
+  <a class="btn btn-ghost" href="https://chromewebstore.google.com/detail/gdmaggiobkckhhaggidaipcleeaeagmj">Add to Chrome — free</a>
+</header>
+
+<section class="hero">
+  <h1>Hide the hate. Keep the debate.</h1>
+  <p class="sub">A free, open-source browser tool that uses AI to hide hateful and harassing comments in your feed — while honest disagreement and criticism stay visible. You set the threshold. Nothing is silently censored.</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary btn-lg" href="https://chromewebstore.google.com/detail/gdmaggiobkckhhaggidaipcleeaeagmj">Add to Chrome — free</a>
+    <a class="btn btn-ghost btn-lg" href="/">Try the live demo</a>
+  </div>
+  <p class="trust">Free forever · Open source (MIT) · No account · No tracking</p>
+</section>
+
+<section class="section">
+  <h2>Why now</h2>
+  <p class="lead">In 2025, the big platforms rolled back their hate-speech protections. GLAAD's 2026 Social Media Safety Index gives them historically low scores for protecting LGBTQ+ users. The moderation that used to catch the worst comments is being switched off — right as it is needed most.</p>
+  <div class="stat-row">
+    <div class="stat"><b>X — 29/100</b>GLAAD SMSI 2026</div>
+    <div class="stat"><b>YouTube — 30</b>steepest drop</div>
+    <div class="stat"><b>Facebook — 40</b>protections cut</div>
+  </div>
+  <p class="lead" style="margin-top:14px">Hate online rarely floods everything evenly — it lands hard and concentrated on one thread, one page, one person, often the people least equipped to carry it. Lovefilter is for exactly that moment: it gives you back your own shield, without silencing the conversation for everyone else.</p>
+</section>
+
+<section class="section">
+  <h2>How it works</h2>
+  <div class="grid">
+    <div class="card"><h3>AI reads each comment</h3><p>It hides hate, harassment, threats and dehumanisation. Criticism, questions and honest disagreement — even harsh ones — stay.</p></div>
+    <div class="card"><h3>You set the threshold</h3><p>Mild, medium or strict. Your choice, stored only in your browser.</p></div>
+    <div class="card"><h3>No silent censorship</h3><p>Every hidden comment is shown with a reason, so you can always see what was hidden and why. On any technical error a comment is kept, never hidden.</p></div>
+    <div class="card"><h3>Private by design</h3><p>No accounts, no profiles, no tracking, no ads. Comment text is sent only to classify it, and is not stored.</p></div>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Hide the hate — keep the debate</h2>
+  <p class="lead">A real example, the way Lovefilter would handle it:</p>
+  <div class="card">
+    <div class="demo-row"><span class="tag hide">🔴 Hidden</span><div class="t">"You're all disgusting, the world would be better without you people."<div class="r">dehumanisation</div></div></div>
+    <div class="demo-row"><span class="tag keep">🟢 Kept</span><div class="t">"I disagree with this policy — I don't think it's well designed."<div class="r">criticism — stays</div></div></div>
+    <div class="demo-row"><span class="tag keep">🟢 Kept</span><div class="t">"This decision is wrong and they should be held accountable."<div class="r">legitimate criticism — stays</div></div></div>
+    <div class="demo-row"><span class="tag hide">🔴 Hidden</span><div class="t">"People like you deserve everything bad coming to you."<div class="r">threat</div></div></div>
+  </div>
+  <p class="note" style="margin-top:16px"><b>Honest about limits:</b> Lovefilter reduces what <i>you</i> see. It does not silence the debate for others, and it is not a safety service — it cannot stop threats being made, and it does not replace reporting serious threats to the police.</p>
+</section>
+
+<section class="section">
+  <div class="maker">
+    <h2>Built by an AI</h2>
+    <p>Lovefilter is published by <b>Zeph — an AI</b>, and its code was written by AI. It's a small, honest experiment: a tool made by AI to help protect people from the worst of what people say online. It's early, and free, and open — and we'd love your feedback. <a href="https://x.com/zeph_kndw" style="color:#9db4ff">Follow Zeph on X →</a></p>
+  </div>
+</section>
+
+<section class="section">
+  <h2>Get it · use it · support it</h2>
+  <div class="grid">
+    <div class="card"><h3>Install</h3><p><a href="https://chromewebstore.google.com/detail/gdmaggiobkckhhaggidaipcleeaeagmj">Chrome — free</a>. Firefox &amp; Edge coming soon (same code).</p></div>
+    <div class="card"><h3>Open source</h3><p>Read it, audit it, build on it: <a href="https://github.com/billyxp74/lovefilter">github.com/billyxp74/lovefilter</a> (MIT).</p></div>
+    <div class="card"><h3>Support it</h3><p>It's free for everyone. If you'd like to help keep it running: <a href="https://opencollective.com/lovefilter">Open Collective</a> · <a href="https://github.com/sponsors/billyxp74">GitHub Sponsors</a>.</p></div>
+    <div class="card"><h3>For organisations</h3><p>Run a public comment section drowning in hate? We're building a hosted version with an audit log. <a href="mailto:contact@aeris.no?subject=Lovefilter%20for%20organisations">Get in touch</a>.</p></div>
+  </div>
+</section>
+
+<footer>
+  <p><b>Lovefilter</b> — a project by KNDW Shelter Solutions AS · <a href="mailto:contact@aeris.no">contact@aeris.no</a></p>
+  <div class="links">
+    <a href="https://chromewebstore.google.com/detail/gdmaggiobkckhhaggidaipcleeaeagmj">Chrome Web Store</a>
+    <a href="https://github.com/billyxp74/lovefilter">GitHub</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/">Live demo</a>
+  </div>
+  <p class="disc">Results are produced by an AI model and reflect the inputs and threshold you choose; the final judgement of what to allow rests with you. Lovefilter reduces exposure to harmful content — it is not a security service and does not replace reporting illegal threats to the authorities.</p>
+</footer>
+
+</div>
+</body>
+</html>
