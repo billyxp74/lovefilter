@@ -6,6 +6,7 @@ const API = "https://vakt.aeris.no/api/klassifiser";
 const MARK = "data-kf";               // prosessering-markør
 let settings = { enabled: true, streng: "medium" };
 let hiddenCount = 0;
+let liftedCount = 0;
 
 // ── innstillingar ────────────────────────────────────────────────────────
 chrome.storage?.sync.get(["enabled", "streng"], (s) => {
@@ -18,7 +19,7 @@ chrome.storage?.onChanged.addListener((ch) => {
 });
 
 // ── skjul / vis ──────────────────────────────────────────────────────────
-function skjul(el, reason) {
+function skjul(el, reason, severity) {
   if (el.getAttribute(MARK) === "hidden") return;
   el.setAttribute(MARK, "hidden");
   const inner = el.querySelector('[data-testid="tweetText"]')?.closest("div") || el;
@@ -28,8 +29,9 @@ function skjul(el, reason) {
   bar.style.cssText =
     "filter:none;font:13px system-ui;background:#fff5f5;border:1px solid #fecaca;color:#b91c1c;" +
     "border-radius:10px;padding:8px 12px;margin:6px 0;display:flex;gap:10px;align-items:center;justify-content:space-between";
+  const flag = (severity === "criminal" || severity === "severe") ? " · report-worthy" : "";
   const txt = document.createElement("span");
-  txt.textContent = "🛡️ Hidden by Lovefilter" + (reason ? " — " + reason : "");
+  txt.textContent = "🛡️ Hidden by Lovefilter" + (reason ? " — " + reason : "") + flag;
   const btn = document.createElement("button");
   btn.textContent = "Show anyway";
   btn.style.cssText =
@@ -39,6 +41,21 @@ function skjul(el, reason) {
   inner.parentElement?.insertBefore(bar, inner);
   hiddenCount++;
   chrome.storage?.local.set({ hiddenCount });
+}
+
+// ── Wall of Love: løft fram dei støttande stemmene ─────────────────────────
+// Reint positiv: ein varsam grøn aksent på kommentarar klassifisert som "support".
+// Skjuler ingenting, flyttar ingenting, endrar ikkje teksten — berre eit lite hint
+// om at her finst venlegheit. Aldri påtrengande.
+function loft(el) {
+  const mark = el.getAttribute(MARK);
+  if (mark === "hidden" || mark === "lifted") return;
+  el.setAttribute(MARK, "lifted");
+  const inner = el.querySelector('[data-testid="tweetText"]')?.closest("div") || el;
+  inner.style.boxShadow = "inset 4px 0 0 #22c55e";
+  inner.style.borderRadius = "4px";
+  liftedCount++;
+  chrome.storage?.local.set({ liftedCount });
 }
 
 // ── samle + klassifisere ───────────────────────────────────────────────────
@@ -52,7 +69,8 @@ async function behandle(batch) {
     });
     const data = await r.json();
     (data.results || []).forEach((v, i) => {
-      if (v.action === "hide") skjul(batch[i].el, v.reason);
+      if (v.action === "hide") skjul(batch[i].el, v.reason, v.severity);
+      else if (v.category === "support") loft(batch[i].el);
     });
   } catch (e) {
     // feiler vakta → la alt stå (aldri skjul ved feil)

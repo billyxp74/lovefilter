@@ -110,8 +110,10 @@ def _sys(streng):
         "legitimate and stays; attacking a person or group for who they ARE (sexual orientation, gender "
         "identity, ethnicity, nationality, religion, disability) is what you hide. When in genuine doubt → keep. "
         'Reply ONLY with JSON: {"action":"keep"|"hide","category":"support|criticism|'
-        'question|hate|harassment|threat|spam|other","reason":"short reason","confidence":0.0-1.0}. '
-        "Comments may be in any language."
+        'question|hate|harassment|threat|spam|other","severity":"none|low|medium|severe|criminal",'
+        '"reason":"short reason","confidence":0.0-1.0}. '
+        'severity = how serious the harm is: "none" for anything kept, up to "criminal" for illegal '
+        "threats or incitement to violence (report-worthy). Comments may be in any language."
     )
 
 _CACHE = {}            # (streng, tekst) -> verdikt-dict  (per worker)
@@ -134,6 +136,7 @@ def klassifiser(tekst, streng):
 
 def _norm(v):
     v.setdefault("action", "keep"); v.setdefault("category", "anna")
+    v.setdefault("severity", "none")
     v.setdefault("reason", ""); v.setdefault("confidence", 0.0)
     if v["action"] not in ("keep", "hide"):
         v["action"] = "keep"
@@ -337,7 +340,7 @@ def api_klassifiser():
         res = list(pool.map(lambda t: klassifiser(t, streng), texts))
     # slank respons til det utvidelsen treng
     out = [{"action": v.get("action", "keep"), "category": v.get("category", ""),
-            "reason": v.get("reason", "")} for v in res]
+            "severity": v.get("severity", "none"), "reason": v.get("reason", "")} for v in res]
     return app.response_class(json.dumps({"results": out}), mimetype="application/json")
 
 
