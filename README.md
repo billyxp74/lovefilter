@@ -1,9 +1,10 @@
-# Lovefilter — stop hate, keep free speech 🏳️‍🌈
+# Lovefilter — hide the hate, keep the debate 🏳️‍🌈
 
 A free, transparent browser extension that uses AI to hide hate, harassment and
 threats in your feed — while keeping honest disagreement and criticism visible.
+It also gently **lifts the supportive replies** you'd otherwise scroll past.
 
-**We love free speech. We just don't want hate.**
+**Hide the hate, keep the debate.**
 
 > Live demo: **[vakt.aeris.no](https://vakt.aeris.no)** · Privacy: [vakt.aeris.no/privacy](https://vakt.aeris.no/privacy)
 
@@ -26,12 +27,14 @@ A moderation tool asks you to trust it. So everything is auditable:
 
 ```
 X / Twitter feed ──content.js──▶  vakt.aeris.no/api/klassifiser  ──▶  Gemini Flash
-       ▲                                                                    │
-       └──────────  blur + "Show anyway"  ◀── {action: keep|hide, reason} ──┘
+       ▲                                                                       │
+       └──  blur · "Show anyway" · 💚 lift support  ◀── {action, category, severity, reason} ──┘
 ```
 
 - `extension/` — Manifest V3 content script for `x.com` / `twitter.com`. Scans visible
-  posts, batches the text, blurs anything the API flags as hate/harassment/threats.
+  posts, batches the text, blurs anything flagged as hate/harassment/threats, and gives
+  supportive replies a quiet green accent (**Wall of Love**). Severe/criminal hits are
+  marked *report-worthy* — it never auto-reports.
 - `app.py` — Flask classification API. Uses Google **Gemini Flash** (fast, multilingual,
   reads any language; English reasons out). Per-worker in-memory cache; nothing persisted.
 - `facebook.py` — experimental Facebook/Instagram Graph API moderation (work in progress).
@@ -49,7 +52,7 @@ python3 app.py                        # serves the demo + /api/klassifiser
 1. Edit `extension/content.js` if you want to point `API` at your own backend.
 2. `chrome://extensions` → enable **Developer mode** → **Load unpacked** → pick `extension/`.
 
-The packaged version is on the Chrome Web Store (in review at time of writing).
+The published **v0.1.0** is on the Chrome Web Store; this repo is **v0.2.0** (adds Wall of Love + severity tiers).
 
 ## Status
 
