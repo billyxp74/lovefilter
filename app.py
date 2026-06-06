@@ -29,6 +29,13 @@ def _load_key():
 GEMINI_KEY = _load_key()
 GEMINI_MODEL = "gemini-2.5-flash-lite"
 
+# Lokal fail-safe-fallback (Legion RTX 4070 via Tailscale) — gratis backup om Gemini
+# feilar eller dagleg tak er nådd. Eit Gemini-utfall fell då til lokal modell i staden
+# for å sleppe gjennom alt. Sett LF_OLLAMA_URL="" for å deaktivere.
+OLLAMA_URL = os.environ.get("LF_OLLAMA_URL", "http://REDACTED-HOST:11434").rstrip("/")
+OLLAMA_MODEL = os.environ.get("LF_OLLAMA_MODEL", "qwen2.5:7b")
+OLLAMA_TIMEOUT = int(os.environ.get("LF_OLLAMA_TIMEOUT", "60"))  # romsleg: fyrste kall kan kald-laste modellen
+
 # ── Abuse-/kostnadsvakt (alt fail-open: blokkerer aldri feeden, vernar berre rekninga) ──
 _DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "kommentarvakt.db")
 MAX_TEXT_LEN = int(os.environ.get("LF_MAX_TEXT_LEN", "600"))      # kapp per kommentar (token-blow-up-vern)
@@ -115,30 +122,54 @@ def klassifiser(tekst, streng):
         _CACHE[key] = dict(v)
     return v
 
+def _norm(v):
+    v.setdefault("action", "keep"); v.setdefault("category", "anna")
+    v.setdefault("reason", ""); v.setdefault("confidence", 0.0)
+    if v["action"] not in ("keep", "hide"):
+        v["action"] = "keep"
+    return v
+
+def _gemini_classify(tekst, streng):
+    url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+           f"{GEMINI_MODEL}:generateContent?key={GEMINI_KEY}")
+    body = {
+        "system_instruction": {"parts": [{"text": _sys(streng)}]},
+        "contents": [{"parts": [{"text": tekst}]}],
+        "generationConfig": {"response_mime_type": "application/json", "temperature": 0},
+    }
+    req = urllib.request.Request(url, data=json.dumps(body).encode(),
+                                 headers={"Content-Type": "application/json"})
+    r = urllib.request.urlopen(req, timeout=20, context=ssl.create_default_context())
+    d = json.loads(r.read())
+    return _norm(json.loads(d["candidates"][0]["content"]["parts"][0]["text"]))
+
+def _ollama_classify(tekst, streng):
+    body = {"model": OLLAMA_MODEL, "system": _sys(streng), "prompt": tekst,
+            "format": "json", "stream": False, "keep_alive": "30m", "options": {"temperature": 0}}
+    req = urllib.request.Request(OLLAMA_URL + "/api/generate", data=json.dumps(body).encode(),
+                                 headers={"Content-Type": "application/json"})
+    r = urllib.request.urlopen(req, timeout=OLLAMA_TIMEOUT)
+    v = _norm(json.loads(json.loads(r.read())["response"]))
+    v["reason"] = (str(v.get("reason", ""))[:120] + " [lokal fallback]").strip()
+    return v
+
 def _klassifiser_raw(tekst, streng):
-    if not _spend_ok_and_count():
-        return {"action": "keep", "category": "feil", "reason": "dagleg tak nadd", "confidence": 0.0}
-    try:
-        url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
-               f"{GEMINI_MODEL}:generateContent?key={GEMINI_KEY}")
-        body = {
-            "system_instruction": {"parts": [{"text": _sys(streng)}]},
-            "contents": [{"parts": [{"text": tekst}]}],
-            "generationConfig": {"response_mime_type": "application/json", "temperature": 0},
-        }
-        req = urllib.request.Request(url, data=json.dumps(body).encode(),
-                                     headers={"Content-Type": "application/json"})
-        r = urllib.request.urlopen(req, timeout=20, context=ssl.create_default_context())
-        d = json.loads(r.read())
-        v = json.loads(d["candidates"][0]["content"]["parts"][0]["text"])
-        v.setdefault("action", "keep"); v.setdefault("category", "anna")
-        v.setdefault("reason", ""); v.setdefault("confidence", 0.0)
-        if v["action"] not in ("keep", "hide"):
-            v["action"] = "keep"
-        return v
-    except Exception as e:
-        # Feiler vakta, BEHALD (aldri skjul ved teknisk feil) + flagg for review
-        return {"action": "keep", "category": "feil", "reason": f"vakt-feil: {e}", "confidence": 0.0}
+    """Gemini primær → lokal Legion-fallback (gratis) → fail-open keep.
+    Aldri skjul ved teknisk feil; eit Gemini-utfall (eller nådd dagleg tak) fell til den
+    lokale modellen i staden for å sleppe gjennom alt hatet."""
+    gem_err = "dagleg tak nadd"
+    if _spend_ok_and_count():
+        try:
+            return _gemini_classify(tekst, streng)
+        except Exception as e:
+            gem_err = str(e)
+    if OLLAMA_URL:
+        try:
+            return _ollama_classify(tekst, streng)
+        except Exception:
+            pass
+    # Begge feila → BEHALD (aldri skjul ved teknisk feil)
+    return {"action": "keep", "category": "feil", "reason": f"vakt-feil: {gem_err}", "confidence": 0.0}
 
 
 app = Flask(__name__)
