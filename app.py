@@ -196,7 +196,7 @@ Finally — love is love ❤️"""
 
 SIDE = """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lovefilter — stop hate, keep free speech</title>
+<title>Lovefilter — hide the hate, keep the debate</title>
 <style>
 :root{--ink:#1e293b;--muted:#64748b;--line:#e5e7eb;--red:#ef4444;--green:#22c55e;--blue:#3b82f6}
 *{box-sizing:border-box}body{font-family:system-ui,sans-serif;margin:0;background:#fafafa;color:var(--ink)}
@@ -226,7 +226,7 @@ button{background:var(--ink);color:#fff;border:0;font-weight:700;cursor:pointer}
 .ok{background:#dcfce7;color:#15803d;padding:11px 14px;border-radius:9px;font-weight:600}
 </style></head><body><div class="bar"></div><div class="wrap">
 <h1>🏳️‍🌈 Lovefilter</h1>
-<p class="sub">We love free speech — we just don't want hate. AI hides hate, harassment & threats; honest disagreement and criticism stay.</p>
+<p class="sub">We love free speech — we just don't want hate. AI hides hate and harassment in your feed; honest disagreement and criticism stay. It's new, so sometimes wrong — every call is one-click reversible.</p>
 <p class="eq">Pride = Love = Lovefilter.</p>
 <form method="POST">
   <textarea name="kommentarar" placeholder="Paste comments — one per line…">{{ raw }}</textarea>

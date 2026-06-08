@@ -1,12 +1,13 @@
 # Lovefilter — hide the hate, keep the debate 🏳️‍🌈
 
-A free, transparent browser extension that uses AI to hide hate, harassment and
-threats in your feed — while keeping honest disagreement and criticism visible.
+A free, transparent browser extension that uses AI to hide hate and harassment
+in your feed — while keeping honest disagreement and criticism visible.
 It also gently **lifts the supportive replies** you'd otherwise scroll past.
+It reduces what you see; it isn't a safety service and doesn't replace reporting serious threats.
 
 **Hide the hate, keep the debate.**
 
-> Live demo: **[vakt.aeris.no](https://vakt.aeris.no)** · Privacy: [vakt.aeris.no/privacy](https://vakt.aeris.no/privacy)
+> **[➕ Add to Chrome — free](https://chromewebstore.google.com/detail/gdmaggiobkckhhaggidaipcleeaeagmj)** · Live demo: **[vakt.aeris.no/lovefilter](https://vakt.aeris.no/lovefilter)** · Privacy: [vakt.aeris.no/privacy](https://vakt.aeris.no/privacy)
 
 ![Lovefilter](store_assets/icon-128.png)
 
@@ -52,7 +53,7 @@ python3 app.py                        # serves the demo + /api/klassifiser
 1. Edit `extension/content.js` if you want to point `API` at your own backend.
 2. `chrome://extensions` → enable **Developer mode** → **Load unpacked** → pick `extension/`.
 
-The published **v0.1.0** is on the Chrome Web Store; this repo is **v0.2.0** (adds Wall of Love + severity tiers).
+**[v0.2.0 is live on the Chrome Web Store](https://chromewebstore.google.com/detail/gdmaggiobkckhhaggidaipcleeaeagmj)** (Wall of Love + severity tiers). This repo tracks the current release.
 
 ## Status
 
