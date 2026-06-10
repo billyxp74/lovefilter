@@ -17,32 +17,26 @@ from flask import Flask, request, render_template_string, redirect
 # Vald etter benchmark mot Kimi (8s/kall): Gemini er ~9× raskare og meir presis
 # på hat-vs-kritikk-grensa. REST-kall → ingen ekstra pakke-avhengigheit.
 def _load_key():
-    # 1) Lovefilter sin EIGEN produkt-nøkkel (åtskilt frå AI-familiens gateway).
-    k = os.environ.get("LF_GEMINI_KEY", "").strip()
+    # Produkt-nøkkel: env-var fyrst, deretter valfri nøkkel-fil (sti via env).
+    # Ingen interne stiar/infrastruktur hardkoda i offentleg repo.
+    k = os.environ.get("LF_GEMINI_KEY", "").strip() or os.environ.get("GEMINI_API_KEY", "").strip()
     if k:
         return k
-    try:
-        k = open(os.path.expanduser("~/.config/REDACTED-SECRETS/lovefilter-gemini-key")).read().strip()
-        if k:
-            return k
-    except FileNotFoundError:
-        pass
-    # 2) Fallback: familie-gatewayen sin nøkkel (berre til eigen nøkkel er på plass).
-    try:
-        for line in open(os.path.expanduser("~/REDACTED/aeris-gateway/.env")):
-            if line.startswith("GEMINI_API_KEY="):
-                return line.strip().split("=", 1)[1]
-    except FileNotFoundError:
-        pass
-    return os.environ.get("GEMINI_API_KEY", "")
+    keyfile = os.environ.get("LF_GEMINI_KEY_FILE", "").strip()
+    if keyfile:
+        try:
+            return open(os.path.expanduser(keyfile)).read().strip()
+        except OSError:
+            pass
+    return ""
 
 GEMINI_KEY = _load_key()
 GEMINI_MODEL = "gemini-2.5-flash-lite"
 
-# Lokal fail-safe-fallback (Legion RTX 4070 via Tailscale) — gratis backup om Gemini
-# feilar eller dagleg tak er nådd. Eit Gemini-utfall fell då til lokal modell i staden
-# for å sleppe gjennom alt. Sett LF_OLLAMA_URL="" for å deaktivere.
-OLLAMA_URL = os.environ.get("LF_OLLAMA_URL", "http://REDACTED-HOST:11434").rstrip("/")
+# Lokal fail-safe-fallback (valfri, t.d. Ollama på eigen boks) — gratis backup om Gemini
+# feilar eller dagleg tak er nådd. Sett LF_OLLAMA_URL for å aktivere (av som standard;
+# ingen intern adresse hardkoda i offentleg repo).
+OLLAMA_URL = os.environ.get("LF_OLLAMA_URL", "").rstrip("/")
 OLLAMA_MODEL = os.environ.get("LF_OLLAMA_MODEL", "qwen2.5:7b")
 OLLAMA_TIMEOUT = int(os.environ.get("LF_OLLAMA_TIMEOUT", "60"))  # romsleg: fyrste kall kan kald-laste modellen
 
@@ -55,10 +49,23 @@ RATE_PER_MIN = int(os.environ.get("LF_RATE_PER_MIN", "600"))      # maks tekstar
 _RL = defaultdict(deque)            # ip -> tidsstempel (per-worker glidande vindu)
 _RL_LOCK = threading.Lock()
 
+# Kva proxy-header vi stoler på for klient-IP. Klientar kan sjølv sette
+# X-Forwarded-For, så den er BERRE trygg bak ein proxy som overskriv han.
+# LF_TRUST_PROXY=cf  → bak Cloudflare: bruk CF-Connecting-IP
+# LF_TRUST_PROXY=xff → bak eigen reverse-proxy som set X-Forwarded-For
+# (tom, standard)    → bruk remote_addr direkte (kan ikkje spoofast)
+_TRUST_PROXY = os.environ.get("LF_TRUST_PROXY", "").strip().lower()
+
 def _client_ip():
-    return (request.headers.get("CF-Connecting-IP")
-            or request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
-            or request.remote_addr or "?")
+    if _TRUST_PROXY == "cf":
+        ip = request.headers.get("CF-Connecting-IP", "").strip()
+        if ip:
+            return ip
+    elif _TRUST_PROXY == "xff":
+        ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        if ip:
+            return ip
+    return request.remote_addr or "?"
 
 def _rate_ok(ip, cost=1):
     now = time.time()
@@ -66,6 +73,10 @@ def _rate_ok(ip, cost=1):
         dq = _RL[ip]
         while dq and dq[0] < now - 60:
             dq.popleft()
+        if not dq and len(_RL) > 10000:   # rydd tomme deques → ingen sakte minnelekk
+            for k in [k for k, v in _RL.items() if not v][:5000]:
+                del _RL[k]
+            dq = _RL[ip]
         if len(dq) + cost > RATE_PER_MIN:
             return False
         dq.extend([now] * cost)
@@ -130,7 +141,10 @@ def klassifiser(tekst, streng):
     v = _klassifiser_raw(tekst, streng)
     if v.get("category") != "feil":            # cache aldri transiente feil
         if len(_CACHE) >= _CACHE_MAX:
-            _CACHE.clear()
+            # kast eldste fjerdedel (dict held innsetjingsrekkefølge) i staden
+            # for full flush → ingen kostnadsspike når cachen er full
+            for k in list(_CACHE)[:_CACHE_MAX // 4]:
+                del _CACHE[k]
         _CACHE[key] = dict(v)
     return v
 
@@ -143,15 +157,17 @@ def _norm(v):
     return v
 
 def _gemini_classify(tekst, streng):
+    # Nøkkel i header (x-goog-api-key), IKKJE i URL — held han ute av proxy-/serverloggar.
     url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
-           f"{GEMINI_MODEL}:generateContent?key={GEMINI_KEY}")
+           f"{GEMINI_MODEL}:generateContent")
     body = {
         "system_instruction": {"parts": [{"text": _sys(streng)}]},
         "contents": [{"parts": [{"text": tekst}]}],
         "generationConfig": {"response_mime_type": "application/json", "temperature": 0},
     }
     req = urllib.request.Request(url, data=json.dumps(body).encode(),
-                                 headers={"Content-Type": "application/json"})
+                                 headers={"Content-Type": "application/json",
+                                          "x-goog-api-key": GEMINI_KEY})
     r = urllib.request.urlopen(req, timeout=20, context=ssl.create_default_context())
     d = json.loads(r.read())
     return _norm(json.loads(d["candidates"][0]["content"]["parts"][0]["text"]))
